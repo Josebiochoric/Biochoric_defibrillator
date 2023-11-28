@@ -4,9 +4,6 @@ import socket
 import serial
 import time
 
-# Personal Access Token for GitHub
-GITHUB_TOKEN = 'your_personal_access_token_here'
-
 def is_connected(hostname="www.google.com"):
     """ Check if there is an internet connection. """
     try:
@@ -20,14 +17,12 @@ def is_connected(hostname="www.google.com"):
 
 def get_file_sha(url):
     """ Get the SHA-1 hash of the file at the given URL. """
-    headers = {'Authorization': f'token {GITHUB_TOKEN}'}
-    response = requests.get(url, headers=headers)
+    response = requests.get(url)
     return hashlib.sha1(response.content).hexdigest() if response.status_code == 200 else None
 
 def download_file(url, filename):
     """ Download the file from the given URL to the specified filename. """
-    headers = {'Authorization': f'token {GITHUB_TOKEN}'}
-    response = requests.get(url, headers=headers)
+    response = requests.get(url)
     if response.status_code == 200:
         with open(filename, 'wb') as file:
             file.write(response.content)
@@ -75,12 +70,12 @@ def main():
         print("No internet connection. Skipping updates.")
     else:
         # URLs of the raw files on GitHub
-        gui_url = "https://raw.githubusercontent.com/user/repo/branch/GUI.py"
-        defib_url = "https://raw.githubusercontent.com/user/repo/branch/defibrillator.py"
+        gui_url = "https://raw.githubusercontent.com/Josebiochoric/Biochoric_defibrillator/main/GUI.py"
+        defib_url = "https://github.com/Josebiochoric/Biochoric_defibrillator/blob/main/defibrillator.py"
 
         # Paths to the local copies of the files
-        gui_path = "path/to/local/GUI.py"
-        defib_path = "path/to/local/defibrillator.py"
+        gui_path = "home/biochoric/GUI.py"
+        defib_path = "home/biochoric/defibrillator.py"
 
         # Update GUI.py
         update_file(gui_url, gui_path)

@@ -7,7 +7,7 @@ import time
 import _thread
 
 #hi I am an update
-
+# Hi I am a second update
 ############# set pins
 output_pins = [machine.Pin(27,machine.Pin.OUT), machine.Pin(28,machine.Pin.OUT), machine.Pin(17,machine.Pin.OUT), machine.Pin(18,machine.Pin.OUT)]
 pair1 = [output_pins[0], output_pins[2]] #forward polarization pins

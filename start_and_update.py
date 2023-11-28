@@ -3,6 +3,7 @@ import hashlib
 import socket
 import serial
 import time
+import subprocess
 
 def is_connected(hostname="www.google.com"):
     """ Check if there is an internet connection. """
@@ -60,10 +61,14 @@ def update_file(file_url, local_path, serial_port=None):
     else:
         print(f"No update needed for {local_path}")
 
-def run_as_main(script_path):
-    """ Execute the given script as the main module. """
-    with open(script_path) as file:
-        exec(file.read(), {'__name__': '__main__'})
+def run_script_as_main(script_path):
+    """ Execute the given script as a separate process. """
+    try:
+        subprocess.run(["python3", script_path], check=True)
+        print(f"Successfully ran {script_path}")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to run {script_path}: {e}")
+
 
 def main():
     if not is_connected():
@@ -71,11 +76,11 @@ def main():
     else:
         # URLs of the raw files on GitHub
         gui_url = "https://raw.githubusercontent.com/Josebiochoric/Biochoric_defibrillator/main/GUI.py"
-        defib_url = "https://github.com/Josebiochoric/Biochoric_defibrillator/blob/main/defibrillator.py"
+        defib_url = "https://raw.githubusercontent.com/Josebiochoric/Biochoric_defibrillator/main/defibrillator.py"
 
         # Paths to the local copies of the files
-        gui_path = "home/biochoric/GUI.py"
-        defib_path = "home/biochoric/defibrillator.py"
+        gui_path = "/home/biochoric/GUI.py"
+        defib_path = "/home/biochoric/defibrillator.py"
 
         # Update GUI.py
         update_file(gui_url, gui_path)
@@ -84,7 +89,7 @@ def main():
         update_file(defib_url, defib_path, serial_port='/dev/ttyACM0')
 
     # Run GUI.py as main
-    run_as_main(gui_path)
+    run_script_as_main(gui_path)
 
 if __name__ == "__main__":
     main()

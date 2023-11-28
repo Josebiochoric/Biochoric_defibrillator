@@ -54,7 +54,7 @@ class app:
     notebook.add(tab2, text="Advanced settings")
     notebook.add(tab3, text="Log")
     notebook.pack(expand = False, fill ="both")
-    background_image = tk.PhotoImage(file="defibrillator_background.png")
+    background_image = tk.PhotoImage(file="/home/biochoric/defibrillator_background.png")
 
     def pi_communication(variable_id, comp_message):
         variable_id=str(variable_id)

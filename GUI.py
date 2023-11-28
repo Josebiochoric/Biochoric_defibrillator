@@ -34,6 +34,8 @@ time_charging=0
 energy = 0
 voltage = 0
 
+#Hi I am updating
+
 class app:
     # creating the tkinter window
     window = tk.Tk()

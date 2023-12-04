@@ -14,8 +14,8 @@ import math
 import subprocess
 import sys
 # Open the serial port
-#serial_port = '/dev/ttyACM0'
-serial_port = 'COM6'
+serial_port = '/dev/ttyACM0'
+#serial_port = 'COM6'
 ser = serial.Serial(serial_port, 9600, timeout=0.1)  # Replace '/dev/ttyUSB0' with the appropriate serial port
 
 #variable_id
@@ -41,7 +41,7 @@ class app:
     window = tk.Tk()
     window.title("Biochoric defibrillator interface")  
     window.geometry("1024x600")  # Adjusted size for the Raspberry Pi screen
-    #window.attributes('-fullscreen', True)
+    window.attributes('-fullscreen', True)
     my_font = ("Neue Haas Grotesk Text Pro", 18)
     my_font_2 = ('Arial', 24)
     ### Create a Notebook widget and add tabs

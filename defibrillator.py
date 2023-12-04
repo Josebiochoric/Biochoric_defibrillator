@@ -45,6 +45,12 @@ pause_t=0
 def Average(lst):
     return sum(lst) / len(lst)
 
+def cubic_fit(x):
+    return 3.58345890e-07 * math.pow(x, 3) - 1.89420208e-04 * math.pow(x, 2) + 1.05758876e-01 * x - 3.22859942e-01
+
+def power_fit(x):
+    return 0.02637989 * math.pow(x, 1.2113786)
+
 class app: 
     #################################################################################################################
     def calibration():
@@ -170,11 +176,11 @@ class app:
             Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
             print(Voltage_defibrillation)
             
-
         elif calibration_switch == False:
             pass
 
-        time_charging = (math.exp((Voltage_defibrillation - 3896.97) / 701.89) - 250.34) / 7.09
+        time_charging = cubic_fit(Voltage_defibrillation)
+
         
         #### reset settings####
     def reset():
@@ -192,6 +198,7 @@ class app:
 
         modes.deplet_capacitor()
         modes.stand_by_mode()
+        print("reseting")
         ### parallelize this function?
         pass
 
@@ -229,13 +236,13 @@ class modes:
 
 uart = UART(0, baudrate=9600)
 
-#calibration_switch == True
-#app.amperage_sensing()
-#app.calibration()
-app.charge()
-app.defibrillation_discharge()
-#app.charge()
+print("the time necessary to charge is: " + str(time_charging))
 print("hi")
+#Voltage_defibrillation = 100
+#calibration_switch= False
+#app.resistance_calculation()
+#app.charge()
+#print("the time necessary to charge is: " + str(time_charging))
 
 while True:
     if uart.any():
@@ -251,9 +258,10 @@ while True:
             #response = "current: {} A".format(amperage)
             #sys.stdout.write(response + "\n")
         if value1 == "2":
-            sys.stdout.write("charging\n")
             #####calculate variables as voltage and so here
             app.charge()
+            response3= "Charging time: {} seconds".format(time_charging)
+            sys.stdout.write(response3 + "\n")
         if value1 == "3":
             response = "working"
             sys.stdout.write(response + "\n")
@@ -262,7 +270,7 @@ while True:
             sys.stdout.write("Reseting all settings\n")
             app.reset()
         if value1 == "5":
-            calibration_switch = True
+            calibration_switch = False
             response5 = "Voltage set to: {} volts".format(value2)
             sys.stdout.write(response5 + "\n")
             Voltage_defibrillation = value2

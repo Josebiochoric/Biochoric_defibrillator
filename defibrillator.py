@@ -62,7 +62,7 @@ class app:
         modes.activate_charging_mode()
         cycle = int((0.06/ 3.3) * 65535)
         pwm.duty_u16(cycle)
-        time.sleep(3)
+        time.sleep(2)
         pwm.deinit()
         modes.activate_discharge_mode()
         _thread.start_new_thread(app.amperage_sensing, ())
@@ -77,12 +77,12 @@ class app:
         modes.deplet_capacitor() # jsut in case
         if amperage != 0:
             calibration_switch = True
-            print("calibration successful")
+            #print("calibration successful")
             ### send amperage to GUI
         else:
             ### send amperage to GUI to display error message
             ## set amperage back to 0
-            print("error in calibration")
+            #print("error in calibration")
             amperage = 0
 
     def charge():
@@ -106,7 +106,7 @@ class app:
         modes.activate_discharge_mode()
         if charge_switch == True:
             for i in range(pulses):
-                print("bip I am defibrillating")
+                #print("bip I am defibrillating")
                 for pin in pair1 and pair2:
                     pin.off()
                 for pin in pair1:
@@ -136,19 +136,20 @@ class app:
             pre_sensor_voltage = (pre_sensor_voltage/ MILLIVOLT_PER_AMPERE)
             #print(pre_sensor_voltage)
             ERROR.append(pre_sensor_voltage)
-        ERROR=Average(ERROR)                
+        ERROR=Average(ERROR)
+        #print("the error is " + str(ERROR))
 
     def amperage_sensing():
         global AREF, DEFAULT_OUTPUT_VOLTAGE, MILLIVOLT_PER_AMPERE, ERROR, amperage
-        num_samples = 100  # Number of samples to average (adjust to your needs)
+        num_samples = 5  # Number of samples to average (adjust to your needs)
         samples = [0] * num_samples  
-        for i in range(100):
+        for i in range(5):
             analogValue = ADC.read_u16(analogInputPin)
             sensor_voltage = (analogValue / 65535) * AREF #Volt
             #print("sensor voltage " + str(sensor_voltage))
             sensor_voltage = (sensor_voltage - DEFAULT_OUTPUT_VOLTAGE ) * 1000 #mvolt    
             sensor_voltage = (sensor_voltage/ MILLIVOLT_PER_AMPERE) - ERROR
-            print(sensor_voltage)
+            #print(sensor_voltage)
             if sensor_voltage >= 0:
                 sensor_voltage = 0
                 #else:
@@ -161,20 +162,20 @@ class app:
         lowest_number = min(samples)
         amperage = lowest_number*(-1)
         #amperage=1
-        print("amperage: " + str(amperage))
+        #print("amperage: " + str(amperage))
         return  amperage
 
     def resistance_calculation():
         global  amperage, energy, Voltage_defibrillation, time_charging, pulses
         if calibration_switch ==True:
             chest_resistance = 20/amperage
-            print("calculating chest_resistance")
-            tms = 2*pulses/1000
-            desired_voltage = math.sqrt((energy*chest_resistance)/tms)
+            #print("calculating chest_resistance")
+            tms = 2*float(pulses)/1000
+            desired_voltage = math.sqrt((float(energy)*float(chest_resistance))/tms)
             total_resistance = chest_resistance + 19 #internal circuit resistance
             # Calculate the total voltage using the voltage divider formula
             Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
-            print(Voltage_defibrillation)
+            #print("the voltage is: " + str(Voltage_defibrillation))
             
         elif calibration_switch == False:
             pass
@@ -198,7 +199,7 @@ class app:
 
         modes.deplet_capacitor()
         modes.stand_by_mode()
-        print("reseting")
+        #print("reseting")
         ### parallelize this function?
         pass
 
@@ -236,52 +237,71 @@ class modes:
 
 uart = UART(0, baudrate=9600)
 
-print("the time necessary to charge is: " + str(time_charging))
+#print("the time necessary to charge is: " + str(time_charging))
 print("hi")
 #Voltage_defibrillation = 100
 #calibration_switch= False
 #app.resistance_calculation()
 #app.charge()
 #print("the time necessary to charge is: " + str(time_charging))
+#energy = 0.5
+#app.calibration()
+#app.charge()
+#print("the time necessary to charge is: " + str(time_charging))
 
 while True:
     if uart.any():
-        message = sys.stdin.readline().strip()  # Read a line from the PC
+        #message = uart.readline()
+        message = sys.stdin.readline().strip()
+        # Read a line from the PC
         values = message.split(",")
         value1, value2 = values
+        #sys.stdout.flush()
         if value1 == "0":
             energy = value2
             response0 = "Energy set to: {} Jules".format(value2)
             sys.stdout.write(response0 + "\n")
+            IGBT3.on()
         if value1 == "1":
             app.calibration()
-            #response = "current: {} A".format(amperage)
-            #sys.stdout.write(response + "\n")
+            response = "I have run the calibration process and the current is: {} A".format(amperage)
+            sys.stdout.write(response + "\n")
+            IGBT3.off()
         if value1 == "2":
             #####calculate variables as voltage and so here
             app.charge()
             response3= "Charging time: {} seconds".format(time_charging)
             sys.stdout.write(response3 + "\n")
+            IGBT2.on()
         if value1 == "3":
             response = "working"
             sys.stdout.write(response + "\n")
             app.defibrillation_discharge()
+            IGBT2.off()
         if value1 == "4":
             sys.stdout.write("Reseting all settings\n")
             app.reset()
+            IGBT3.off()
+            #machine.reset()
         if value1 == "5":
             calibration_switch = False
+            Voltage_defibrillation = float(value2)
             response5 = "Voltage set to: {} volts".format(value2)
             sys.stdout.write(response5 + "\n")
-            Voltage_defibrillation = value2
+    
+            IGBT3.on()
         if value1 == "6":
             shape = value2.split("/")
             pulses, pos_t, neg_t, pause_t = shape
             response = "shape: {} ".format(shape)
             sys.stdout.write(response + "\n")
+            IGBT4.on()
         if value1 =="7":
             #set off
+            
             app.reset()
             modes.turn_off
-
-    else: time.sleep(0.1)
+    else: pass
+        
+    #sys.stdout.flush()
+    time.sleep(0.01)

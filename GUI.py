@@ -1,4 +1,4 @@
-# importing everything from tkinter
+#importing everything from tkinter
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
@@ -16,7 +16,7 @@ import sys
 # Open the serial port
 serial_port = '/dev/ttyACM0'
 #serial_port = 'COM6'
-ser = serial.Serial(serial_port, 9600, timeout=0.1)  # Replace '/dev/ttyUSB0' with the appropriate serial port
+ser = serial.Serial(serial_port, 9600, timeout=5)  # Replace '/dev/ttyUSB0' with the appropriate serial port
 
 #variable_id
 # 0 for energy selection
@@ -64,6 +64,7 @@ class app:
         comp_message = str(comp_message)
         message = "{},{}\n".format(variable_id, comp_message)
         ser.write(message.encode())
+        time.sleep(5)
         response = ser.readline().decode('utf-8').strip()
         if response != "":
             print("Received from Pico:", response)
@@ -80,15 +81,19 @@ class app:
         main_tab.my_button["state"] = tk.NORMAL
         main_tab.text_label_2.config(text = "2nd step: Please put the pads on the animal and proceed to calibrate")
         energy = var
-        response= app.pi_communication(0,energy)
+        _thread.start_new_thread(app.pi_communication, (0,energy))
+        #response= app.pi_communication(0,energy)
 
     def calibration_pretext():
         main_tab.text_label_2.config(text = "2nd step: Please wait")
+        _thread.start_new_thread(app.pi_communication, (1,0))
+        time.sleep(6)
         app.window.after(1, app.calibration)
         
     def calibration():
         global time_charging, calibration_switch
-        app.pi_communication(1,0)
+        
+        #app.pi_communication(1,0)
         if current == 0:
             main_tab.text_label_2.config(text = "2nd step: Error in calibration, please repeat")
             logging.info("Error in calibration, please repeat")
@@ -107,16 +112,20 @@ class app:
     def charge_pretext():
         if calibration_switch == True:
             main_tab.text_label_3.config(text = "3rd step: Charging please wait")
-            advanced_tab.my_button_advanced_charge["bg"] = "#FDDA0D"
-            main_tab.my_button_2["bg"] = "#FDDA0D"
+
+            advanced_tab.my_button_advanced_charge["bg"] = "Orange"
+            advanced_tab.my_button_advanced_charge["activebackground"] = "Orange"
             advanced_tab.my_button_advanced_charge["text"] = "Charging"
+
+            main_tab.my_button_2["bg"] = "Orange"
+            main_tab.my_button_2["activebackground"] = "Orange"
             main_tab.my_button_2["text"] = "Charging"
             app.window.after(1, app.charge)
-            
         elif calibration_switch == False: main_tab.text_label_3.config(text = "3rd step: Please calibrate before charging")
     def charge():
         global charge_switch, time_charging
-        #time_charging=app.pi_communication(2,0)
+        _thread.start_new_thread(app.pi_communication, (2,0))
+        #app.pi_communication(2,0)
         charge_switch = True
         time.sleep((time_charging))
 
@@ -129,8 +138,10 @@ class app:
 
         main_tab.my_button_3["state"] = tk.NORMAL
         main_tab.my_button_3["bg"] = "#d90007"
+        main_tab.my_button_3["activebackground"] = "#d90007"
         advanced_tab.my_button_advanced_defibrillate["state"] = tk.NORMAL
         advanced_tab.my_button_advanced_defibrillate["bg"] = "#d90007"
+        advanced_tab.my_button_advanced_defibrillate["activebackground"] = "#d90007"
         # I sleep the program for the amount of time taken by the charge
         main_tab.text_label_3.config(text = "3rd step: Charge complete")
         logging.info("the defibrillator has been charged in " + str(time_charging) + " seconds")
@@ -139,18 +150,23 @@ class app:
     def defibrillate_pretext():
         if charge_switch == True:
             main_tab.text_label_3.config(text = "3rd step: Defribrillation running")
+            main_tab.my_button_3["text"] = "Defibrillating"
+            advanced_tab.my_button_advanced_defibrillate["text"] = "Defibrillating"
             app.window.after(1, app.defibrillate)
         elif charge_switch == False:
             main_tab.text_label_3.config(text = "3rd step: Please charge before proceeding with defibrillation")
 
     def defibrillate():
-        #amp_read_check= app.pi_communication(3,0)
+        _thread.start_new_thread(app.pi_communication, (3,0))
+        #app.pi_communication(3,0)
         ## A new read of the sensor is carried to ensure the voltage is passing through the paddles
         time.sleep(2) # check value at the end
         main_tab.my_button_3["state"] = tk.DISABLED
         main_tab.my_button_3["bg"] = "#0095D9"
+        main_tab.my_button_3["text"] = "Defibrillate"
         advanced_tab.my_button_advanced_defibrillate["state"] = tk.DISABLED
         advanced_tab.my_button_advanced_defibrillate["bg"] = "#0095D9"
+        advanced_tab.my_button_advanced_defibrillate["text"] = "Defibrillate"
         main_tab.text_label_3.config(text = "3rd step: Defibrilation successful")
 
         main_tab.my_button_2["state"] = tk.NORMAL
@@ -159,7 +175,9 @@ class app:
         logging.info("Defibrillation had been carried successfully")
 
     def reset():
-        app.pi_communication(4,0)
+        global calibration_switch, charge_switch, time_charging, energy, voltage, current
+        #app.pi_communication(4,0)
+        _thread.start_new_thread(app.pi_communication, (4,0))
         #logging.info(line)
         main_tab.my_button_2["state"] = tk.DISABLED
         main_tab.my_button_3["state"] = tk.DISABLED
@@ -175,6 +193,14 @@ class app:
         main_tab.text_label_3.config(text = "3rd step: Please charge before proceeding with defibrillation")
         advanced_tab.text_frame_advanced_1_3.config(text="Energy not set")
         advanced_tab.text_frame_advanced_2_3.config(text="Voltage not set")
+
+        calibration_switch = False
+        charge_switch = False
+        time_charging=0
+        energy = 0
+        voltage = 0
+        current= 0.2
+
         logging.info("All the settings have been reseted")
 
     def voltage_selection(var):
@@ -190,7 +216,8 @@ class app:
         advanced_tab.text_frame_advanced_1_3.config(text="Energy overrided by voltage")
         main_tab.text_label.config(text = "1st step: Energy overrided by voltage")
         main_tab.text_label_2.config(text = "2nd step: No need of calibration")
-        response= app.pi_communication(5,voltage)
+        _thread.start_new_thread(app.pi_communication, (5,voltage))
+        #app.pi_communication(5,voltage)
         time_charging = round(app.cubic_fit(voltage),2)
         logging.info("voltage has been set to " + str(voltage) + " volts")
         logging.info("The necessary time for charging is " + str(time_charging) + " seconds")
@@ -199,7 +226,8 @@ class app:
     def shape_selection(shape, positive, negative, pause):
         pulse= str(shape) + "/" + str(positive) + "/" + str(negative) + "/" + str(pause)
         #positive=float(advanced_tab.spinbox1.get())
-        app.pi_communication(6, pulse)
+        _thread.start_new_thread(app.pi_communication, (6,0))
+        #app.pi_communication(6, pulse)
     
     def cubic_fit(x):
         return 3.58345890e-07 * math.pow(x, 3) - 1.89420208e-04 * math.pow(x, 2) + 1.05758876e-01 * x - 3.22859942e-01
@@ -221,8 +249,10 @@ class app:
     def on_close_window():
     # This function will be executed when the user tries to close the window
         if messagebox.askokcancel("Quit", "Do you want to close the application?"):
+            app.pi_communication(4,0) ## this discharges the capacitor through Bypath-IGBT
+            logging.info("The program was closed")
             app.window.destroy()
-            app.pi_communication(1,0) ## this discharges the capacitor through Bypath-IGBT
+            
 
     window.protocol("WM_DELETE_WINDOW", on_close_window)
 #####################################################################################
@@ -272,8 +302,8 @@ class advanced_tab:
     ######### Set energy manually settings ############################
     current_value_1 = tk.DoubleVar()
     label_frame_advanced = tk.LabelFrame(app.tab2, text='Set energy manually (J)  ',font=app.my_font)
-    label_frame_advanced.grid(column=0, row=0, padx=0, pady=0, ipadx=40, ipady=25, sticky="NW")
-    radio = tk.Button(label_frame_advanced, font=app.my_font,  command = lambda: app.energy_selection(advanced_tab.get_current_value(advanced_tab.current_value_1)), text="Set", bg="#0095D9", fg="white", width=7)
+    label_frame_advanced.grid(column=0, row=0, padx=0, pady=0, ipadx=48, ipady=25, sticky="NW")
+    radio = tk.Button(label_frame_advanced, font=app.my_font,  command = lambda: app.energy_selection(advanced_tab.get_current_value(advanced_tab.current_value_1)), text="Set", bg="#0095D9", fg="white", width=5)
     radio.grid(column=3, row=0, padx=20, ipadx= 30, ipady= 10)
     text_frame_advanced_1 = tk.Label(label_frame_advanced, font=app.my_font, text="J", fg="#0095D9")
     text_frame_advanced_1.grid(row=1, column=0)
@@ -286,8 +316,8 @@ class advanced_tab:
     ######### Set voltage manually settings ###########################
     current_value_2 = tk.DoubleVar()
     label_frame_advanced_2 = tk.LabelFrame(app.tab2, text='Set voltage manually (V) ',font=app.my_font)
-    label_frame_advanced_2.grid(column=1, row=0, padx=0, pady=0, ipadx=25, ipady=25, columnspan=2, sticky="W")
-    radio_2 = tk.Button(label_frame_advanced_2, font=app.my_font, command = lambda: app.voltage_selection(float(advanced_tab.get_current_value(advanced_tab.current_value_2))), text="Set", bg="#0095D9", fg="white", width=7)
+    label_frame_advanced_2.grid(column=1, row=0, padx=0, pady=0, ipadx=10, ipady=25, columnspan=2, sticky="W")
+    radio_2 = tk.Button(label_frame_advanced_2, font=app.my_font, command = lambda: app.voltage_selection(float(advanced_tab.get_current_value(advanced_tab.current_value_2))), text="Set", bg="#0095D9", fg="white", width=5)
     radio_2.grid(column=3, row=0,  padx=20,  ipadx=30, ipady=10)
     text_frame_advanced_2 = tk.Label(label_frame_advanced_2, font=app.my_font, text=" V", fg="#0095D9")
     text_frame_advanced_2.grid(row=1, column=0, padx=0,columnspan=3)
@@ -301,7 +331,7 @@ class advanced_tab:
     ####################################################################
     label_frame_advanced_3 = tk.LabelFrame(app.tab2, text='Pulse shape settings  ',font=app.my_font) # Create main label
     label_frame_advanced_3.grid(column=0, row=1,  padx=0, ipadx=0,ipady=25, sticky="N")
-    radio_3 = tk.Button(label_frame_advanced_3, font=app.my_font, command=  lambda: app.shape_selection(float(advanced_tab.spinbox1.get()),float(advanced_tab.spinbox2.get()), float(advanced_tab.spinbox3.get()), float(advanced_tab.spinbox4.get())), text="Set", bg="#0095D9", fg="white", width=10) #Create button to set manual settings
+    radio_3 = tk.Button(label_frame_advanced_3, font=app.my_font, command=  lambda: app.shape_selection(float(advanced_tab.spinbox1.get()),float(advanced_tab.spinbox2.get()), float(advanced_tab.spinbox3.get()), float(advanced_tab.spinbox4.get())), text="Set", bg="#0095D9", fg="white", width=7) #Create button to set manual settings
     radio_3.grid(column=2, row=3, padx=20,ipadx= 10, ipady= 10)
     my_var_pulse = tk.StringVar(label_frame_advanced_3, value='16') # Create the second spinbox for pulse count
     spinbox1 = tk.Spinbox(label_frame_advanced_3, from_=0, to=16, increment=1, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_pulse)
@@ -325,14 +355,14 @@ class advanced_tab:
     text_frame_advanced_3_4.grid(row=5, column=1, padx=0, sticky='w')
     ###### external Buttons############################################
     ###################################################################
-    my_button_advanced_calibrate = tk.Button(app.tab2, font=app.my_font, text = "Calibrate",command = app.calibration_pretext,  bg="#0095D9", fg="white", width=12)
+    my_button_advanced_calibrate = tk.Button(app.tab2, font=app.my_font, text = "Calibrate",command = app.calibration_pretext,  bg="#0095D9", fg="white", width=10)
     my_button_advanced_calibrate.grid(row=1, column=1, pady=0, ipadx= 10, ipady= 20, sticky="NW")
-    my_button_advanced_charge = tk.Button(app.tab2, font=app.my_font, text = "Charge", command = app.charge_pretext,  bg="#0095D9", fg="white", width=12, state=tk.DISABLED)
-    my_button_advanced_charge.grid(row=1, column=1, pady=0, padx=270, ipadx= 10, ipady= 20, sticky="NW")
-    my_button_advanced_defibrillate = tk.Button(app.tab2, font=app.my_font, text = "Defibrillate", command = app.defibrillate_pretext,  bg="#0095D9", fg="white", width=12, state=tk.DISABLED)
+    my_button_advanced_charge = tk.Button(app.tab2, font=app.my_font, text = "Charge", command = app.charge_pretext,  bg="#0095D9", fg="white", width=10, state=tk.DISABLED)
+    my_button_advanced_charge.grid(row=1, column=1, pady=0, padx=240, ipadx= 10, ipady= 20, sticky="NW")
+    my_button_advanced_defibrillate = tk.Button(app.tab2, font=app.my_font, text = "Defibrillate", command = app.defibrillate_pretext,  bg="#0095D9", fg="white", width=10, state=tk.DISABLED)
     my_button_advanced_defibrillate.grid(row=1, column=1, pady=(0,0), ipadx= 10, ipady= 20, sticky="W")
-    my_button_advanced_reset = tk.Button(app.tab2, font=app.my_font, text = "Reset settings", command = app.reset,  bg="#0095D9", fg="white", width=12)
-    my_button_advanced_reset.grid(row=1, column=1, pady=(240,0), padx=270, ipadx= 10, ipady= 20, sticky="SW")
+    my_button_advanced_reset = tk.Button(app.tab2, font=app.my_font, text = "Reset settings", command = app.reset,  bg="#0095D9", fg="white", width=10)
+    my_button_advanced_reset.grid(row=1, column=1, pady=(240,0), padx=240, ipadx= 10, ipady= 20, sticky="SW")
 
 class log:
     def redirect_output_to_log(text_widget):

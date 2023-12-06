@@ -88,6 +88,10 @@ def main():
         # Update defibrillator.py and load to Pico
         update_file(defib_url, defib_path, serial_port='/dev/ttyACM0')
 
+    # Always load defibrillator.py to Pico
+    print("Restarting Pico's backend...")
+    load_file_to_pico(defib_path, serial_port='/dev/ttyACM0')
+
     # Run GUI.py as main
     run_script_as_main(gui_path)
 

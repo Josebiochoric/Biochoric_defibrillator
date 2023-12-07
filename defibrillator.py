@@ -148,7 +148,7 @@ class app:
         global AREF, DEFAULT_OUTPUT_VOLTAGE, MILLIVOLT_PER_AMPERE, ERROR, amperage
         num_samples = 10  # Number of samples to average (adjust to your needs)
         samples = [0] * num_samples  
-        for i in range(510):
+        for i in range(10):
             analogValue = ADC.read_u16(analogInputPin)
             sensor_voltage = (analogValue / 65535) * AREF #Volt
             #print("sensor voltage " + str(sensor_voltage))

@@ -17,6 +17,11 @@ IGBT1 = machine.Pin(27, machine.Pin.OUT)
 IGBT2 = machine.Pin(28, machine.Pin.OUT)
 IGBT3 = machine.Pin(17, machine.Pin.OUT)
 IGBT4 = machine.Pin(18, machine.Pin.OUT)
+
+IGBTS = [IGBT1,IGBT2, IGBT3, IGBT4]
+for i in IGBTS:
+    i.off()
+    
 charging_pin = machine.Pin(17, machine.Pin.OUT)
 discharging_pin = machine.Pin(16, machine.Pin.OUT)
 bypass_IGBT = machine.Pin(20,machine.Pin.OUT)
@@ -87,8 +92,8 @@ class app:
 
     def charge():
         global charge_switch, amperage, Voltage_defibrillation
-        modes.stand_by_mode()
         modes.deplet_capacitor()
+        modes.stand_by_mode()
         app.resistance_calculation()
         v_var= 0.003*Voltage_defibrillation
         cycle = int((v_var/ 3.3) * 65535)
@@ -233,22 +238,13 @@ class modes:
         charging_pin.off()
         discharging_pin.off()
         bypass_IGBT.off()
- 
 
 uart = UART(0, baudrate=9600)
-
 #print("the time necessary to charge is: " + str(time_charging))
 print("hi")
-#Voltage_defibrillation = 100
-#calibration_switch= False
-#app.resistance_calculation()
-#app.charge()
-#print("the time necessary to charge is: " + str(time_charging))
-#energy = 0.5
-#app.calibration()
-#app.charge()
-#print("the time necessary to charge is: " + str(time_charging))
 
+
+"""
 while True:
     if uart.any():
         #message = uart.readline()
@@ -274,9 +270,10 @@ while True:
             sys.stdout.write(response3 + "\n")
             IGBT2.on()
         if value1 == "3":
+
+            app.defibrillation_discharge()
             response = "working"
             sys.stdout.write(response + "\n")
-            app.defibrillation_discharge()
             IGBT2.off()
         if value1 == "4":
             sys.stdout.write("Reseting all settings\n")
@@ -293,6 +290,10 @@ while True:
         if value1 == "6":
             shape = value2.split("/")
             pulses, pos_t, neg_t, pause_t = shape
+            pulses=float(pulses)
+            pos_t=float(pos_t)
+            neg_t=float(neg_t)
+            pause_t=float(pause_t)
             response = "shape: {} ".format(shape)
             sys.stdout.write(response + "\n")
             IGBT4.on()
@@ -305,3 +306,92 @@ while True:
         
     #sys.stdout.flush()
     time.sleep(0.01)
+    """
+
+while True:
+    try:
+        if uart.any():
+            message = sys.stdin.readline().strip()
+            values = message.split(",")
+
+            if len(values) >= 2:
+                value1, value2 = values[:2]
+            else:
+                raise ValueError("Invalid input format, expected at least two values.")
+
+            if value1 == "0":
+                try:
+                    energy = value2
+                    response0 = "Energy set to: {} Jules".format(value2)
+                    sys.stdout.write(response0 + "\n")
+                except Exception as e:
+                    sys.stdout.write("Error setting energy: {}\n".format(e))
+
+            elif value1 == "1":
+                try:
+                    app.calibration()
+                    response = amperage
+                    sys.stdout.write( str(response) + "\n")
+                except Exception as e:
+                    sys.stdout.write("Error in calibration: {}\n".format(e))
+
+            elif value1 == "2":
+                try:
+                    #####calculate variables as voltage and so here
+                    app.charge()
+                    response3 = "Charging time: {} seconds".format(time_charging)
+                    sys.stdout.write(response3 + "\n")
+                except Exception as e:
+                    sys.stdout.write("Error during charging: {}\n".format(e))
+
+            elif value1 == "3":
+                try:
+                    app.defibrillation_discharge()
+                    response = "working"
+                    sys.stdout.write(response + "\n")
+                except Exception as e:
+                    sys.stdout.write("Error in defibrillation discharge: {}\n".format(e))
+
+            elif value1 == "4":
+                try:
+                    sys.stdout.write("Resetting all settings\n")
+                    app.reset()
+                except Exception as e:
+                    sys.stdout.write("Error in resetting settings: {}\n".format(e))
+
+            elif value1 == "5":
+                try:
+                    calibration_switch = False
+                    Voltage_defibrillation = float(value2)
+                    response5 = "Voltage set to: {} volts".format(value2)
+                    sys.stdout.write(response5 + "\n")
+                except ValueError:
+                    sys.stdout.write("Error: Invalid voltage input. Please enter a valid number.\n")
+                except Exception as e:
+                    sys.stdout.write("Error setting voltage: {}\n".format(e))
+
+            elif value1 == "6":
+                try:
+                    shape = value2.split("/")
+                    if len(shape) != 4:
+                        raise ValueError("Invalid shape format. Expected 4 values.")
+                    pulses, pos_t, neg_t, pause_t = map(float, shape)
+                    response = "Shape: {} ".format(shape)
+                    sys.stdout.write(response + "\n")
+                except ValueError:
+                    sys.stdout.write("Error: Invalid shape parameters. Ensure all values are numbers.\n")
+                except Exception as e:
+                    sys.stdout.write("Error in setting shape: {}\n".format(e))
+
+            elif value1 == "7":
+                try:
+                    app.reset()
+                    modes.turn_off()
+                except Exception as e:
+                    sys.stdout.write("Error in turning off: {}\n".format(e))
+
+        else:
+            pass
+
+    except Exception as e:
+        sys.stdout.write("An error occurred: {}\n".format(e))

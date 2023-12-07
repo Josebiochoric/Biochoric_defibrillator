@@ -14,8 +14,8 @@ import math
 import subprocess
 import sys
 # Open the serial port
-serial_port = '/dev/ttyACM0'
-#serial_port = 'COM6'
+#serial_port = '/dev/ttyACM0'
+serial_port = 'COM6'
 ser = serial.Serial(serial_port, 9600, timeout=5)  # Replace '/dev/ttyUSB0' with the appropriate serial port
 
 #variable_id
@@ -33,7 +33,13 @@ charge_switch = False
 time_charging=0
 energy = 0
 voltage = 0
-current= 0.2
+current= 0.3
+
+pulses=8
+pos_t=0.00125
+neg_t=0.00125
+pause_t=0
+
 
 #Hi I am updating
 class app:
@@ -41,7 +47,7 @@ class app:
     window = tk.Tk()
     window.title("Biochoric defibrillator interface")  
     window.geometry("1024x600")  # Adjusted size for the Raspberry Pi screen
-    window.attributes('-fullscreen', True)
+    #window.attributes('-fullscreen', True)
     my_font = ("Neue Haas Grotesk Text Pro", 18)
     my_font_2 = ('Arial', 24)
     ### Create a Notebook widget and add tabs
@@ -60,6 +66,7 @@ class app:
     #background_image = tk.PhotoImage(file="/home/biochoric/defibrillator_background.png")
 
     def pi_communication(variable_id, comp_message):
+        global current
         variable_id=str(variable_id)
         comp_message = str(comp_message)
         message = "{},{}\n".format(variable_id, comp_message)
@@ -69,6 +76,12 @@ class app:
         if response != "":
             print("Received from Pico:", response)
         else:pass
+        if variable_id == "1":
+            response = float(response)
+            if response > 0:
+                current = response
+            else: pass
+        else: pass
         return response
     
     def energy_selection(var):
@@ -85,6 +98,7 @@ class app:
         #response= app.pi_communication(0,energy)
 
     def calibration_pretext():
+        global current
         main_tab.text_label_2.config(text = "2nd step: Please wait")
         _thread.start_new_thread(app.pi_communication, (1,0))
         time.sleep(6)
@@ -105,23 +119,22 @@ class app:
             calibration_switch = True
             main_tab.my_button_2["state"] = tk.NORMAL
             advanced_tab.my_button_advanced_charge["state"] = tk.NORMAL
-            app.var_calculation()
             ## your device is now calibrated
         else: pass
 
     def charge_pretext():
-        if calibration_switch == True:
-            main_tab.text_label_3.config(text = "3rd step: Charging please wait")
+        main_tab.text_label_3.config(text = "3rd step: Charging please wait")
 
-            advanced_tab.my_button_advanced_charge["bg"] = "Orange"
-            advanced_tab.my_button_advanced_charge["activebackground"] = "Orange"
-            advanced_tab.my_button_advanced_charge["text"] = "Charging"
+        advanced_tab.my_button_advanced_charge["bg"] = "Orange"
+        advanced_tab.my_button_advanced_charge["activebackground"] = "Orange"
+        advanced_tab.my_button_advanced_charge["text"] = "Charging"
 
-            main_tab.my_button_2["bg"] = "Orange"
-            main_tab.my_button_2["activebackground"] = "Orange"
-            main_tab.my_button_2["text"] = "Charging"
-            app.window.after(1, app.charge)
-        elif calibration_switch == False: main_tab.text_label_3.config(text = "3rd step: Please calibrate before charging")
+        main_tab.my_button_2["bg"] = "Orange"
+        main_tab.my_button_2["activebackground"] = "Orange"
+        main_tab.my_button_2["text"] = "Charging"
+        app.var_calculation()
+        #app.window.after(1, app.charge)
+
     def charge():
         global charge_switch, time_charging
         _thread.start_new_thread(app.pi_communication, (2,0))
@@ -223,10 +236,16 @@ class app:
         logging.info("The necessary time for charging is " + str(time_charging) + " seconds")
         calibration_switch = True
     
-    def shape_selection(shape, positive, negative, pause):
-        pulse= str(shape) + "/" + str(positive) + "/" + str(negative) + "/" + str(pause)
+    def shape_selection(pulse_input, positive_input, negative_input, pause_input):
+        global pulses, pos_t, neg_t, pause_t
+        pulses=float(pulse_input)/2
+        pos_t=float(positive_input)/1000000
+        neg_t=float(negative_input)/1000000
+        pause_t=float(pause_input)/1000000
+
+        pulse= str(pulses) + "/" + str(pos_t) + "/" + str(neg_t) + "/" + str(pause_t)
         #positive=float(advanced_tab.spinbox1.get())
-        _thread.start_new_thread(app.pi_communication, (6,0))
+        _thread.start_new_thread(app.pi_communication, (6, pulse))
         #app.pi_communication(6, pulse)
     
     def cubic_fit(x):
@@ -234,13 +253,19 @@ class app:
 
     def var_calculation():
         global energy, voltage, current, time_charging
-        chest_resistance = 20/float(current)
-        tms = (2*8)/1000
-        voltage = math.sqrt((float(energy)*float(chest_resistance)/float(tms)))
-        total_resistance = chest_resistance + 19
-        voltage = (voltage / chest_resistance) * total_resistance
-        voltage = round(voltage,2)
+        if calibration_switch ==True:
+            chest_resistance = 20/float(current)
+            tms = (2*pulses)/1000
+            voltage = math.sqrt((float(energy)*float(chest_resistance)/float(tms)))
+            total_resistance = chest_resistance + 19
+            voltage = (voltage / chest_resistance) * total_resistance
+            voltage = round(voltage,2)
+        
+        elif calibration_switch ==False:
+            pass
+
         advanced_tab.text_frame_advanced_2_3.config(text="Voltage set to " + str(voltage) + "V")
+        logging.info("the current is " + str(current))
         logging.info("chest resistance through the subject is :" + str(chest_resistance) + " ohms")
         logging.info("The voltage for defibrillation has been set to: " + str(voltage) + " V")
         time_charging = round(app.cubic_fit(voltage),2)
@@ -338,20 +363,20 @@ class advanced_tab:
     spinbox1.grid(row=2, column=0, pady=5)
     text_frame_advanced_3 = tk.Label(label_frame_advanced_3, font=app.my_font, text="Pulse count", fg="#0095D9")
     text_frame_advanced_3.grid(row=2, column=1, padx=0, sticky='w')
-    my_var_positive = tk.StringVar(label_frame_advanced_3, value='100') # Create the second spinbox for t positive
-    spinbox2 = tk.Spinbox(label_frame_advanced_3, from_=0, to=10000, increment=100, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_positive)
+    my_var_positive = tk.StringVar(label_frame_advanced_3, value='1250') # Create the second spinbox for t positive
+    spinbox2 = tk.Spinbox(label_frame_advanced_3, from_=1250, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_positive)
     spinbox2.grid(row=3, column=0, pady=5)
-    text_frame_advanced_3_2 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. positive (ms)", fg="#0095D9")
+    text_frame_advanced_3_2 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. positive (µs)", fg="#0095D9")
     text_frame_advanced_3_2.grid(row=3, column=1, padx=0, sticky='w')
-    my_var_negative = tk.StringVar(label_frame_advanced_3, value='100') # Create the third spinbox for t.negative
-    spinbox3 = tk.Spinbox(label_frame_advanced_3, from_=0, to=10000, increment=100, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_negative)
+    my_var_negative = tk.StringVar(label_frame_advanced_3, value='1250') # Create the third spinbox for t.negative
+    spinbox3 = tk.Spinbox(label_frame_advanced_3, from_=1250, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_negative)
     spinbox3.grid(row=4, column=0, pady=5)
-    text_frame_advanced_3_3 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. negative (ms)", fg="#0095D9")
+    text_frame_advanced_3_3 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. negative (µs)", fg="#0095D9")
     text_frame_advanced_3_3.grid(row=4, column=1, padx=0, sticky='w')
     my_var_pause = tk.StringVar(label_frame_advanced_3, value='0') # Create the fourth spinbox for t.pause
-    spinbox4 = tk.Spinbox(label_frame_advanced_3, from_=0, to=10000, increment=100, width=6, font=('Helvetica', 30), format='%5.0f',  textvariable=my_var_pause)
+    spinbox4 = tk.Spinbox(label_frame_advanced_3, from_=0, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f',  textvariable=my_var_pause)
     spinbox4.grid(row=5, column=0, pady=5)
-    text_frame_advanced_3_4 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. pause (ms)", fg="#0095D9")
+    text_frame_advanced_3_4 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. pause (µs)", fg="#0095D9")
     text_frame_advanced_3_4.grid(row=5, column=1, padx=0, sticky='w')
     ###### external Buttons############################################
     ###################################################################
@@ -404,8 +429,8 @@ log_file_path = f'/home/biochoric/Documents/your_log_{current_time}.txt'
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=[logging.FileHandler(log_file_path, 'a', 'utf-8'), logging.StreamHandler()])
+                    datefmt='%Y-%m-%d %H:%M:%S')#,
+                    #handlers=[logging.FileHandler(log_file_path, 'a', 'utf-8'), logging.StreamHandler()])
 
 # Test messages
 logging.info("Welcome to Biochoric defibrillator")

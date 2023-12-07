@@ -3,6 +3,8 @@ import hashlib
 import socket
 import serial
 import time
+from pyboard import Pyboard, PyboardError
+import pyboard
 import subprocess
 
 def is_connected(hostname="www.google.com"):
@@ -33,16 +35,21 @@ def download_file(url, filename):
         print(f"Failed to download {filename}")
         return False
 
-def load_file_to_pico(file_path, serial_port='/dev/ttyACM0'):
-    """ Load the file to Raspberry Pi Pico through the specified serial port. """
+def load_file_to_pico(filename, port=None):
+    """ Upload the file to the Pico using pyboard.py. """
     try:
-        with open(file_path, 'rb') as file:
-            with serial.Serial(serial_port, 115200, timeout=1) as ser:
-                ser.write(file.read())
-                time.sleep(2)  # wait for the file to be written
-        print(f"Loaded {file_path} to Raspberry Pi Pico")
-    except Exception as e:
-        print(f"Failed to load {file_path} to Raspberry Pi Pico: {e}")
+        board = Pyboard(port)  # Assuming /dev/ttyACM0 is the Pico port
+        board.enter_raw_repl()
+        with open(filename, 'rb') as file:
+            script = file.read()
+        board.exec(script)
+        board.exit_raw_repl()
+        board.close()
+        print(f'Successfully uploaded {filename} to the Pico')
+    except PyboardError as e:
+        print(f'Failed to upload {filename} to the Pico: {e}')
+        return False
+    return True
 
 def update_file(file_url, local_path, serial_port=None):
     """ Update the local file and load to Pico if needed. """
@@ -69,18 +76,16 @@ def run_script_as_main(script_path):
     except subprocess.CalledProcessError as e:
         print(f"Failed to run {script_path}: {e}")
 
-
 def main():
     if not is_connected():
         print("No internet connection. Skipping updates.")
     else:
-        # URLs of the raw files on GitHub
         gui_url = "https://raw.githubusercontent.com/Josebiochoric/Biochoric_defibrillator/main/GUI.py"
         defib_url = "https://raw.githubusercontent.com/Josebiochoric/Biochoric_defibrillator/main/defibrillator.py"
 
         # Paths to the local copies of the files
         gui_path = "/home/biochoric/GUI.py"
-        defib_path = "/home/biochoric/defibrillator.py"
+        defib_path = "/home/biochoric/main.py"
 
         # Update GUI.py
         update_file(gui_url, gui_path)
@@ -89,11 +94,11 @@ def main():
         update_file(defib_url, defib_path, serial_port='/dev/ttyACM0')
 
     # Always load defibrillator.py to Pico
-    print("Restarting Pico's backend...")
-    load_file_to_pico(defib_path, serial_port='/dev/ttyACM0')
+    print("Restarting backend...")
+    load_file_to_pico( "/home/biochoric/main.py",'/dev/ttyACM0')
 
-    # Run GUI.py as main
-    run_script_as_main(gui_path)
+    # Run GUI.py as a separate process
+    run_script_as_main("/home/biochoric/GUI.py")
 
 if __name__ == "__main__":
     main()

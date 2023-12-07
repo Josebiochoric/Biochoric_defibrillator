@@ -133,7 +133,7 @@ class app:
         main_tab.my_button_2["activebackground"] = "Orange"
         main_tab.my_button_2["text"] = "Charging"
         app.var_calculation()
-        #app.window.after(1, app.charge)
+        app.window.after(1, app.charge)
 
     def charge():
         global charge_switch, time_charging
@@ -221,7 +221,7 @@ class app:
         voltage = var
         advanced_tab.my_button_advanced_calibrate["state"] = tk.DISABLED
         main_tab.my_button["state"]=tk.DISABLED
-
+        calibration_switch = True
         main_tab.my_button_2["state"] = tk.NORMAL
         advanced_tab.my_button_advanced_charge["state"] = tk.NORMAL
 
@@ -234,7 +234,7 @@ class app:
         time_charging = round(app.cubic_fit(voltage),2)
         logging.info("voltage has been set to " + str(voltage) + " volts")
         logging.info("The necessary time for charging is " + str(time_charging) + " seconds")
-        calibration_switch = True
+        
     
     def shape_selection(pulse_input, positive_input, negative_input, pause_input):
         global pulses, pos_t, neg_t, pause_t
@@ -252,24 +252,25 @@ class app:
         return 3.58345890e-07 * math.pow(x, 3) - 1.89420208e-04 * math.pow(x, 2) + 1.05758876e-01 * x - 3.22859942e-01
 
     def var_calculation():
-        global energy, voltage, current, time_charging
-        if calibration_switch ==True:
+        global energy, voltage, current, time_charging, calibration_switch
+        if calibration_switch == False:
             chest_resistance = 20/float(current)
             tms = (2*pulses)/1000
             voltage = math.sqrt((float(energy)*float(chest_resistance)/float(tms)))
             total_resistance = chest_resistance + 19
             voltage = (voltage / chest_resistance) * total_resistance
             voltage = round(voltage,2)
-        
-        elif calibration_switch ==False:
+            logging.info("the current is " + str(current))
+            logging.info("chest resistance through the subject is :" + str(chest_resistance) + " ohms")
+            logging.info("The voltage for defibrillation has been set to: " + str(voltage) + " V")
+            time_charging = round(app.cubic_fit(voltage),2)
+            logging.info("The necessary time for charging is " + str(time_charging) + " seconds")
+            advanced_tab.text_frame_advanced_2_3.config(text="Voltage set to " + str(voltage) + "V")
+
+        elif calibration_switch ==True:
             pass
 
-        advanced_tab.text_frame_advanced_2_3.config(text="Voltage set to " + str(voltage) + "V")
-        logging.info("the current is " + str(current))
-        logging.info("chest resistance through the subject is :" + str(chest_resistance) + " ohms")
-        logging.info("The voltage for defibrillation has been set to: " + str(voltage) + " V")
-        time_charging = round(app.cubic_fit(voltage),2)
-        logging.info("The necessary time for charging is " + str(time_charging) + " seconds")
+        
 
     def on_close_window():
     # This function will be executed when the user tries to close the window

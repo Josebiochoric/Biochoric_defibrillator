@@ -33,7 +33,7 @@ ERROR = 0.3## was 0.5 on the example code
 ####################### Variablesfor amperage sensing and resistance calculation#######################
 amperage = 0
 energy = 0.001 # Jules
-chest_resistance = 0
+chest_resistance = 50
 Voltage_defibrillation = 0
 time_charging= 0
 calibration_switch = False
@@ -158,7 +158,7 @@ class app:
         return  amperage
 
     def resistance_calculation():
-        global  amperage, energy, Voltage_defibrillation, time_charging, pulses
+        global  amperage, energy, Voltage_defibrillation, time_charging, pulses, chest_resistance
         if calibration_switch ==True:
             chest_resistance = 20/amperage
             #print("calculating chest_resistance")
@@ -170,7 +170,12 @@ class app:
             #print("the voltage is: " + str(Voltage_defibrillation))
             
         elif calibration_switch == False:
-            pass
+            tms = (2*pulses)/1000
+            desired_voltage = math.sqrt((float(energy)*float(chest_resistance)/float(tms)))
+            total_resistance = chest_resistance + 19
+            Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
+
+        else: pass
 
         time_charging = cubic_fit(Voltage_defibrillation)
 
@@ -231,14 +236,18 @@ while True:
             sys.stdout.write( str(response) + "\n")
         elif value1 == "2":
             app.charge()
+            response3 = "Charging time: {} seconds".format(time_charging)
+            sys.stdout.write(response3 + "\n")
         elif value1 == "3":
             app.defibrillation_discharge()
         elif value1 == "4":
             app.reset()
         elif value1 == "5":
-            calibration_switch = False
+            calibration_switch = None
             Voltage_defibrillation = float(value2)
         elif value1 == "6":
             shape = value2.split("/")
             pulses, pos_t, neg_t, pause_t = map(float, shape)
+        elif value1 == "7":
+            chest_resistance = float(value2)
         else: pass

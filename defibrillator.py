@@ -236,8 +236,8 @@ while True:
             sys.stdout.write( str(response) + "\n")
         elif value1 == "2":
             app.charge()
-            response3 = "Charging time: {} seconds".format(time_charging)
-            sys.stdout.write(response3 + "\n")
+            #response3 = "Charging time: {} seconds".format(time_charging)
+            #sys.stdout.write(response3 + "\n")
         elif value1 == "3":
             app.defibrillation_discharge()
         elif value1 == "4":
@@ -250,6 +250,6 @@ while True:
             pulses, pos_t, neg_t, pause_t = map(float, shape)
         elif value1 == "7":
             chest_resistance = float(value2)
-            response7 = "The resistance has been set: {} ohms".format(str(chest_resistance))
-            sys.stdout.write(response7 + "\n")
+            #response7 = "The resistance has been set: {} ohms".format(str(chest_resistance))
+            #sys.stdout.write(response7 + "\n")
         else: pass

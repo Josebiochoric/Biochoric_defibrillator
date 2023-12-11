@@ -290,7 +290,7 @@ class app:
             time_charging = round(app.cubic_fit(voltage),2)
             logging.info("chest resistance through the subject is :" + str(chest_resistance) + " ohms")
             logging.info("The voltage for defibrillation has been set to: " + str(voltage) + " V")
-            print("yay")
+            #print("yay")
         else: pass
 
     def on_close_window():

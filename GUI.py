@@ -37,8 +37,8 @@ current= 0.3
 chest_resistance = 50
 
 pulses=8
-pos_t=0.00125
-neg_t=0.00125
+pos_t=0.0010
+neg_t=0.0010
 pause_t=0
 
 
@@ -190,7 +190,7 @@ class app:
         logging.info("Defibrillation had been carried successfully")
 
     def reset():
-        global calibration_switch, charge_switch, time_charging, energy, voltage, current
+        global calibration_switch, charge_switch, time_charging, energy, voltage, current, pulses, pos_t, neg_t, pause_t
         #app.pi_communication(4,0)
         _thread.start_new_thread(app.pi_communication, (4,0))
         #logging.info(line)
@@ -216,6 +216,11 @@ class app:
         energy = 0
         voltage = 0
         current= 0.2
+
+        pulses=8
+        pos_t=0.0010
+        neg_t=0.0010
+        pause_t=0
 
         logging.info("All the settings have been reseted")
 
@@ -388,13 +393,13 @@ class advanced_tab:
     spinbox1.grid(row=2, column=0, pady=5)
     text_frame_advanced_3 = tk.Label(label_frame_advanced_3, font=app.my_font, text="Pulse count", fg="#0095D9")
     text_frame_advanced_3.grid(row=2, column=1, padx=0, sticky='w')
-    my_var_positive = tk.StringVar(label_frame_advanced_3, value='1250') # Create the second spinbox for t positive
-    spinbox2 = tk.Spinbox(label_frame_advanced_3, from_=1250, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_positive)
+    my_var_positive = tk.StringVar(label_frame_advanced_3, value='1000') # Create the second spinbox for t positive
+    spinbox2 = tk.Spinbox(label_frame_advanced_3, from_=1000, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_positive)
     spinbox2.grid(row=3, column=0, pady=5)
     text_frame_advanced_3_2 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. positive (µs)", fg="#0095D9")
     text_frame_advanced_3_2.grid(row=3, column=1, padx=0, sticky='w')
-    my_var_negative = tk.StringVar(label_frame_advanced_3, value='1250') # Create the third spinbox for t.negative
-    spinbox3 = tk.Spinbox(label_frame_advanced_3, from_=1250, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_negative)
+    my_var_negative = tk.StringVar(label_frame_advanced_3, value='1000') # Create the third spinbox for t.negative
+    spinbox3 = tk.Spinbox(label_frame_advanced_3, from_=1000, to=10000, increment=250, width=6, font=('Helvetica', 30), format='%5.0f', textvariable=my_var_negative)
     spinbox3.grid(row=4, column=0, pady=5)
     text_frame_advanced_3_3 = tk.Label(label_frame_advanced_3, font=app.my_font, text="T. negative (µs)", fg="#0095D9")
     text_frame_advanced_3_3.grid(row=4, column=1, padx=0, sticky='w')

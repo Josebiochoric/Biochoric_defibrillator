@@ -40,8 +40,8 @@ calibration_switch = False
 charge_switch = False
 
 pulses=8
-pos_t=0.00125
-neg_t=0.00125
+pos_t=0.001
+neg_t=0.001
 pause_t=0
 
 def Average(lst):
@@ -189,8 +189,8 @@ class app:
         charge_switch = False
         time_charging = 0
         pulses=8
-        pos_t=0.00125
-        neg_t=0.00125
+        pos_t=0.001
+        neg_t=0.001
         pause_t=0
         modes.deplet_capacitor()
         modes.stand_by_mode()
@@ -240,6 +240,7 @@ while True:
             #sys.stdout.write(response3 + "\n")
         elif value1 == "3":
             app.defibrillation_discharge()
+            #sys.stdout.write( "working" + "\n")
         elif value1 == "4":
             app.reset()
         elif value1 == "5":

@@ -250,4 +250,6 @@ while True:
             pulses, pos_t, neg_t, pause_t = map(float, shape)
         elif value1 == "7":
             chest_resistance = float(value2)
+            response7 = "The resistance has been set: {} ohms".format(str(chest_resistance))
+            sys.stdout.write(response7 + "\n")
         else: pass

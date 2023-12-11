@@ -14,8 +14,8 @@ import math
 import subprocess
 import sys
 # Open the serial port
-#serial_port = '/dev/ttyACM0'
-serial_port = 'COM6'
+serial_port = '/dev/ttyACM0'
+#serial_port = 'COM6'
 ser = serial.Serial(serial_port, 9600, timeout=5)  # Replace '/dev/ttyUSB0' with the appropriate serial port
 
 #variable_id
@@ -48,7 +48,7 @@ class app:
     window = tk.Tk()
     window.title("Biochoric defibrillator interface")  
     window.geometry("1024x600")  # Adjusted size for the Raspberry Pi screen
-    #window.attributes('-fullscreen', True)
+    window.attributes('-fullscreen', True)
     my_font = ("Neue Haas Grotesk Text Pro", 18)
     my_font_2 = ('Arial', 24)
     ### Create a Notebook widget and add tabs
@@ -454,8 +454,8 @@ log_file_path = f'/home/biochoric/Documents/your_log_{current_time}.txt'
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')#,
-                    #handlers=[logging.FileHandler(log_file_path, 'a', 'utf-8'), logging.StreamHandler()])
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    handlers=[logging.FileHandler(log_file_path, 'a', 'utf-8'), logging.StreamHandler()])
 
 # Test messages
 logging.info("Welcome to Biochoric defibrillator")

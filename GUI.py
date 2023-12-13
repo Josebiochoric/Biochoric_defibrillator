@@ -6,6 +6,7 @@ import time
 import sys
 import _thread
 import multiprocessing
+import os
 import numpy as np
 from datetime import datetime
 import logging
@@ -14,9 +15,29 @@ import math
 import subprocess
 import sys
 # Open the serial port
-serial_port = '/dev/ttyACM0'
+#serial_port = '/dev/ttyACM0'
 #serial_port = 'COM6'
-ser = serial.Serial(serial_port, 9600, timeout=5)  # Replace '/dev/ttyUSB0' with the appropriate serial port
+#ser = serial.Serial(serial_port, 9600, timeout=5)  # Replace '/dev/ttyUSB0' with the appropriate serial port
+
+def find_serial_port():
+    # List of possible serial ports
+    possible_unix_ports = [f'/dev/ttyACM{i}' for i in range(10)]  # For Unix-like systems
+    possible_windows_ports = [f'COM{i}' for i in range(1, 11)]  # For Windows systems
+    possible_ports = possible_unix_ports + possible_windows_ports
+    for port in possible_ports:
+        try:
+            ser = serial.Serial(port, 9600, timeout=5)
+            return ser
+        except serial.SerialException:
+            continue
+    raise Exception("No suitable serial port found.")
+
+try:
+    ser = find_serial_port()
+    print(f"Connected to {ser.port}")
+except Exception as e:
+    print(e)
+
 
 #variable_id
 # 0 for energy selection
@@ -48,7 +69,7 @@ class app:
     window = tk.Tk()
     window.title("Biochoric defibrillator interface")  
     window.geometry("1024x600")  # Adjusted size for the Raspberry Pi screen
-    window.attributes('-fullscreen', True)
+    #window.attributes('-fullscreen', True)
     my_font = ("Neue Haas Grotesk Text Pro", 18)
     my_font_2 = ('Arial', 24)
     ### Create a Notebook widget and add tabs
@@ -187,7 +208,7 @@ class app:
         main_tab.my_button_2["state"] = tk.NORMAL
         advanced_tab.my_button_advanced_charge["state"] = tk.NORMAL
 
-        logging.info("Defibrillation had been carried successfully")
+        logging.info("Defibrillation has been carried successfully")
 
     def reset():
         global calibration_switch, charge_switch, time_charging, energy, voltage, current, pulses, pos_t, neg_t, pause_t
@@ -241,6 +262,8 @@ class app:
         _thread.start_new_thread(app.pi_communication, (5,voltage))
         #app.pi_communication(5,voltage)
         time_charging = round(app.cubic_fit(voltage),2)
+        if time_charging <= 1:
+            time_charging = 1
         logging.info("voltage has been set to " + str(voltage) + " volts")
         logging.info("The necessary time for charging is " + str(time_charging) + " seconds")
         
@@ -357,29 +380,25 @@ class advanced_tab:
     ######### Set energy manually settings ############################
     current_value_1 = tk.DoubleVar()
     label_frame_advanced = tk.LabelFrame(app.tab2, text='Set energy manually (J)  ',font=app.my_font)
-    label_frame_advanced.grid(column=0, row=0, padx=0, pady=0, ipadx=48, ipady=25, sticky="NW")
-    radio = tk.Button(label_frame_advanced, font=app.my_font,  command = lambda: app.energy_selection(advanced_tab.get_current_value(advanced_tab.current_value_1)), text="Set", bg="#0095D9", fg="white", width=5)
+    label_frame_advanced.grid(column=0, row=0, padx=0, pady=0, ipadx=10, ipady=25, sticky="NW")
+    radio = tk.Button(label_frame_advanced, font=app.my_font,  command = lambda: app.energy_selection(float(advanced_tab.spin_ener.get())), text="Set", bg="#0095D9", fg="white", width=5)
     radio.grid(column=3, row=0, padx=20, ipadx= 30, ipady= 10)
-    text_frame_advanced_1 = tk.Label(label_frame_advanced, font=app.my_font, text="J", fg="#0095D9")
-    text_frame_advanced_1.grid(row=1, column=0)
-    text_frame_advanced_1_2 = tk.Label(label_frame_advanced, font=app.my_font, text=(get_current_value(current_value_1)), fg="#0095D9")
-    text_frame_advanced_1_2.grid(row=1, column=0, padx=40, sticky='w')
-    slider = ttk.Scale(label_frame_advanced, from_=0, to=2, orient='horizontal', variable=current_value_1, command=lambda event: advanced_tab.slider_changed(advanced_tab.text_frame_advanced_1_2, advanced_tab.current_value_1))
-    slider.grid(column=0, row=0, padx=(30,10), ipadx=60, ipady=25, sticky='w')
+    spin_ener = tk.Spinbox(label_frame_advanced, from_=0, to=200, increment=0.5, wrap=True, buttonbackground="#0095D9", font=('Helvetica', 36), width=10)
+    spin_ener.grid(column=0, row=0, padx=(0,0), ipadx=0, ipady=25, sticky='we')
+    #slider = ttk.Scale(label_frame_advanced, from_=0, to=2, orient='horizontal', variable=current_value_1, command=lambda event: advanced_tab.slider_changed(advanced_tab.text_frame_advanced_1_2, advanced_tab.current_value_1))
+    #slider.grid(column=0, row=0, padx=(30,10), ipadx=60, ipady=25, sticky='w')
     text_frame_advanced_1_3 = tk.Label(label_frame_advanced, font=app.my_font, text="Energy not set", fg="#0095D9")
     text_frame_advanced_1_3.grid(row=2, column=0, padx=0, pady=(10,0),columnspan=4)
     ######### Set voltage manually settings ###########################
-    current_value_2 = tk.DoubleVar()
+    #current_value_2 = tk.DoubleVar()
     label_frame_advanced_2 = tk.LabelFrame(app.tab2, text='Set voltage manually (V) ',font=app.my_font)
     label_frame_advanced_2.grid(column=1, row=0, padx=0, pady=0, ipadx=10, ipady=25, columnspan=2, sticky="W")
-    radio_2 = tk.Button(label_frame_advanced_2, font=app.my_font, command = lambda: app.voltage_selection(float(advanced_tab.get_current_value(advanced_tab.current_value_2))), text="Set", bg="#0095D9", fg="white", width=5)
+    radio_2 = tk.Button(label_frame_advanced_2, font=app.my_font, command = lambda: app.voltage_selection(float(advanced_tab.spin_vol.get())), text="Set", bg="#0095D9", fg="white", width=5)
     radio_2.grid(column=3, row=0,  padx=20,  ipadx=30, ipady=10)
-    text_frame_advanced_2 = tk.Label(label_frame_advanced_2, font=app.my_font, text=" V", fg="#0095D9")
-    text_frame_advanced_2.grid(row=1, column=0, padx=0,columnspan=3)
-    text_frame_advanced_2_2 = tk.Label(label_frame_advanced_2, font=app.my_font, text=(get_current_value(current_value_2)), fg="#0095D9")
-    text_frame_advanced_2_2.grid(row=1, column=0, padx=40, sticky='w',columnspan=3)
-    slider_2 = ttk.Scale(label_frame_advanced_2, from_=0, to=500, orient='horizontal', variable=current_value_2, command=lambda event: advanced_tab.slider_changed(advanced_tab.text_frame_advanced_2_2, advanced_tab.current_value_2))
-    slider_2.grid(column=0, row=0, padx=(30,10), ipadx=60, ipady=25, sticky='we')
+    #slider_2 = ttk.Scale(label_frame_advanced_2, from_=0, to=500, orient='horizontal', variable=current_value_2, command=lambda event: advanced_tab.slider_changed(advanced_tab.text_frame_advanced_2_2, advanced_tab.current_value_2))
+    #slider_2.grid(column=0, row=0, padx=(30,10), ipadx=60, ipady=25, sticky='we')
+    spin_vol = tk.Spinbox(label_frame_advanced_2, from_=0, to=200, increment=0.5, wrap=True, buttonbackground="#0095D9", font=('Helvetica', 36), width=10)
+    spin_vol.grid(column=0, row=0, padx=(0,0), ipadx=0, ipady=25, sticky='we')
     text_frame_advanced_2_3 = tk.Label(label_frame_advanced_2, font=app.my_font, text="Voltage not set", fg="#0095D9")
     text_frame_advanced_2_3.grid(row=2, column=0, padx=0, pady=(10,0),columnspan=4, rowspan=2)
     ######### Manual pulse settings ####################################
@@ -452,10 +471,22 @@ log_text.pack(fill='both', expand=True)
 # Redirect stdout and stderr to the log text widget
 log.redirect_output_to_log(log_text)
 
-# Get current date and time for the filename
-current_time = datetime.now().strftime("%Y%m%d_%H_%M")
-#log_file_path = f'your_log_{current_time}.txt'
-log_file_path = f'/home/biochoric/Documents/your_log_{current_time}.txt'
+def get_log_file_path():
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    if os.name == 'nt':  # Windows
+        # Use the standard Documents directory in Windows
+        base_path = os.path.join(os.environ['USERPROFILE'], 'Documents')
+    else:  # Unix/Linux/Mac
+        base_path = os.path.expanduser('~/Documents')
+        app.window.attributes('-fullscreen', True)
+        #base_path = '/home/biochoric/Documents'
+
+    log_file_path = os.path.join(base_path, f'your_log_{current_time}.txt')
+    return base_path, log_file_path
+
+
+base_path, log_file_path = get_log_file_path()
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -465,9 +496,10 @@ logging.basicConfig(level=logging.DEBUG,
 # Test messages
 logging.info("Welcome to Biochoric defibrillator")
 logging.info("The program has started")
+logging.info("your log file is being saved in " + str(base_path))
 
 # Add a button to the tab that opens the specified folder
-folder_path = '/home/biochoric/Documents'  # Change this to your folder path
+folder_path = base_path #'/home/biochoric/Documents'  # Change this to your folder path
 open_folder_button = tk.Button(app.tab3, text="Open log Folder", command=lambda: log.open_folder(folder_path))
 open_folder_button.config(width=20, height=3, bg="#0095D9", activebackground='light blue', fg="white", font=("Arial", 15))  # You can adjust the width and height as needed
 open_folder_button.pack(side=tk.RIGHT)

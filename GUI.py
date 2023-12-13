@@ -392,7 +392,7 @@ class advanced_tab:
     ######### Set voltage manually settings ###########################
     #current_value_2 = tk.DoubleVar()
     label_frame_advanced_2 = tk.LabelFrame(app.tab2, text='Set voltage manually (V) ',font=app.my_font)
-    label_frame_advanced_2.grid(column=1, row=0, padx=0, pady=0, ipadx=10, ipady=25, columnspan=2, sticky="W")
+    label_frame_advanced_2.grid(column=1, row=0, padx=0, pady=0, ipadx=0, ipady=25, columnspan=2, sticky="W")
     radio_2 = tk.Button(label_frame_advanced_2, font=app.my_font, command = lambda: app.voltage_selection(float(advanced_tab.spin_vol.get())), text="Set", bg="#0095D9", fg="white", width=5)
     radio_2.grid(column=3, row=0,  padx=20,  ipadx=30, ipady=10)
     #slider_2 = ttk.Scale(label_frame_advanced_2, from_=0, to=500, orient='horizontal', variable=current_value_2, command=lambda event: advanced_tab.slider_changed(advanced_tab.text_frame_advanced_2_2, advanced_tab.current_value_2))

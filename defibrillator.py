@@ -9,28 +9,22 @@ import _thread
 output_pins = [machine.Pin(27,machine.Pin.OUT), machine.Pin(28,machine.Pin.OUT), machine.Pin(17,machine.Pin.OUT), machine.Pin(18,machine.Pin.OUT)]
 pair1 = [output_pins[0], output_pins[2]] #forward polarization pins
 pair2 = [output_pins[1], output_pins[3]] # reverse polarization pins
-
-IGBT1 = machine.Pin(27, machine.Pin.OUT)
-IGBT2 = machine.Pin(28, machine.Pin.OUT)
-IGBT3 = machine.Pin(17, machine.Pin.OUT)
-IGBT4 = machine.Pin(18, machine.Pin.OUT)
-
-IGBTS = [IGBT1,IGBT2, IGBT3, IGBT4]
-for i in IGBTS:
+for i in output_pins:
     i.off()
-    
-charging_pin = machine.Pin(17, machine.Pin.OUT)
-discharging_pin = machine.Pin(16, machine.Pin.OUT)
+
+charging_pin = machine.Pin(19, machine.Pin.OUT)
+discharging_pin = machine.Pin(21, machine.Pin.OUT)
 bypass_IGBT = machine.Pin(20,machine.Pin.OUT)
-#amperage sensing pin and variables###########
-analogInputPin = ADC(26)
-pwm = machine.PWM(machine.Pin(12)) # Configure the PWM pin
+
+#amperage sensing pin and high woltage power supply variables###########
+analogInputPin = ADC(26) #current sensor reading
+pwm = machine.PWM(machine.Pin(16)) #pin for setting voltage
 pwm.freq(1000) # Set the frequency of the PWM signal (in Hz)
-MILLIVOLT_PER_AMPERE = 185   # mV per Amp for 5 Amp sensor
-AREF = 3.3 # volt
-DEFAULT_OUTPUT_VOLTAGE = 2.45  # sensor vcc = 5 V
-ERROR = 0.3## was 0.5 on the example code
-####################### Variablesfor amperage sensing and resistance calculation#######################
+MILLIVOLT_PER_AMPERE = 185
+AREF = 3.3
+DEFAULT_OUTPUT_VOLTAGE = 2.45
+ERROR = 0.3
+####################### Variables for amperage sensing and resistance calculation#######################
 amperage = 0
 energy = 0.001 # Jules
 chest_resistance = 50
@@ -49,9 +43,6 @@ def Average(lst):
 
 def cubic_fit(x):
     return 3.58345890e-07 * math.pow(x, 3) - 1.89420208e-04 * math.pow(x, 2) + 1.05758876e-01 * x - 3.22859942e-01
-
-def power_fit(x):
-    return 0.02637989 * math.pow(x, 1.2113786)
 
 class app: 
     #################################################################################################################
@@ -75,7 +66,7 @@ class app:
         for pin in pair1:
             pin.off() 
         modes.stand_by_mode()
-        modes.deplet_capacitor() # jsut in case
+        modes.deplet_capacitor()
         if amperage != 0:
             calibration_switch = True
         else:
@@ -133,7 +124,7 @@ class app:
 
     def amperage_sensing():
         global AREF, DEFAULT_OUTPUT_VOLTAGE, MILLIVOLT_PER_AMPERE, ERROR, amperage
-        num_samples = 1000                                                                        # Number of samples to average (adjust to your needs)
+        num_samples = 1000                           
         samples = [0] * num_samples  
         for i in range(1000):
             analogValue = ADC.read_u16(analogInputPin)
@@ -201,7 +192,6 @@ class modes:
     def activate_charging_mode():
         discharging_pin.off()  
         charging_pin.on()
-        ## make regression to adjust how much time is needed to charge
 
     def activate_discharge_mode():
         charging_pin.off()
@@ -216,7 +206,6 @@ class modes:
 
     def deplet_capacitor():
         bypass_IGBT.on()
-        ###calculate time of discharge to make it more efficient?
         time.sleep(3)
         bypass_IGBT.off()
 
@@ -236,11 +225,8 @@ while True:
             sys.stdout.write( str(response) + "\n")
         elif value1 == "2":
             app.charge()
-            #response3 = "Charging time: {} seconds".format(time_charging)
-            #sys.stdout.write(response3 + "\n")
         elif value1 == "3":
             app.defibrillation_discharge()
-            #sys.stdout.write( "working" + "\n")
         elif value1 == "4":
             app.reset()
         elif value1 == "5":
@@ -251,6 +237,4 @@ while True:
             pulses, pos_t, neg_t, pause_t = map(float, shape)
         elif value1 == "7":
             chest_resistance = float(value2)
-            #response7 = "The resistance has been set: {} ohms".format(str(chest_resistance))
-            #sys.stdout.write(response7 + "\n")
         else: pass

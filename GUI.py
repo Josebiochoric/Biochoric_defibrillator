@@ -5,7 +5,6 @@ from tkinter import messagebox
 import time
 import sys
 import _thread
-import multiprocessing
 import os
 import numpy as np
 from datetime import datetime
@@ -14,10 +13,6 @@ import serial
 import math
 import subprocess
 import sys
-# Open the serial port
-#serial_port = '/dev/ttyACM0'
-#serial_port = 'COM6'
-#ser = serial.Serial(serial_port, 9600, timeout=5)  # Replace '/dev/ttyUSB0' with the appropriate serial port
 
 def find_serial_port():
     # List of possible serial ports
@@ -58,8 +53,8 @@ current= 0.3
 chest_resistance = 50
 
 pulses=8
-pos_t=0.0010
-neg_t=0.0010
+pos_t=0.001
+neg_t=0.001
 pause_t=0
 
 
@@ -69,14 +64,12 @@ class app:
     window = tk.Tk()
     window.title("Biochoric defibrillator interface")  
     window.geometry("1024x600")  # Adjusted size for the Raspberry Pi screen
-    #window.attributes('-fullscreen', True)
     my_font = ("Neue Haas Grotesk Text Pro", 18)
     my_font_2 = ('Arial', 24)
-    ### Create a Notebook widget and add tabs
+
     notebook = ttk.Notebook(window)
     style = ttk.Style()
     style.configure("TNotebook.Tab", font=my_font, tabposition='n')
-
     tab1 = ttk.Frame(notebook, width=1024, height=600)  # Adjusted size for the Raspberry Pi screen
     tab2 = ttk.Frame(notebook, width=1024, height=600)  # Adjusted size for the Raspberry Pi screen
     tab3 = ttk.Frame(notebook, width=1024, height=600)  # Adjusted size for the Raspberry Pi screen
@@ -85,7 +78,6 @@ class app:
     notebook.add(tab3, text="Log")
     notebook.pack(expand = False, fill ="both")
     background_image = tk.PhotoImage(file="defibrillator_background.png")
-    #background_image = tk.PhotoImage(file="/home/biochoric/defibrillator_background.png")
 
     def pi_communication(variable_id, comp_message):
         global current
@@ -129,8 +121,6 @@ class app:
         
     def calibration():
         global time_charging, calibration_switch
-        
-        #app.pi_communication(1,0)
         if current == 0:
             main_tab.text_label_2.config(text = "2nd step: Error in calibration, please repeat")
             logging.info("Error in calibration, please repeat")
@@ -147,24 +137,21 @@ class app:
 
     def charge_pretext():
         main_tab.text_label_3.config(text = "3rd step: Charging please wait")
-
         advanced_tab.my_button_advanced_charge["bg"] = "Orange"
         advanced_tab.my_button_advanced_charge["activebackground"] = "Orange"
         advanced_tab.my_button_advanced_charge["text"] = "Charging"
-
         main_tab.my_button_2["bg"] = "Orange"
         main_tab.my_button_2["activebackground"] = "Orange"
         main_tab.my_button_2["text"] = "Charging"
         app.var_calculation()
+        _thread.start_new_thread(app.pi_communication, (2,0))
+        time.sleep((time_charging))
         app.window.after(1, app.charge)
 
     def charge():
         global charge_switch, time_charging
-        _thread.start_new_thread(app.pi_communication, (2,0))
-        #app.pi_communication(2,0)
+        
         charge_switch = True
-        time.sleep((time_charging))
-
         advanced_tab.my_button_advanced_charge["text"] = "Charge"
         advanced_tab.my_button_advanced_charge["bg"] = "#0095D9"
         advanced_tab.my_button_advanced_charge["state"] = tk.DISABLED
@@ -178,7 +165,7 @@ class app:
         advanced_tab.my_button_advanced_defibrillate["state"] = tk.NORMAL
         advanced_tab.my_button_advanced_defibrillate["bg"] = "#d90007"
         advanced_tab.my_button_advanced_defibrillate["activebackground"] = "#d90007"
-        # I sleep the program for the amount of time taken by the charge
+
         main_tab.text_label_3.config(text = "3rd step: Charge complete")
         logging.info("the defibrillator has been charged in " + str(time_charging) + " seconds")
         

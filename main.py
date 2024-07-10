@@ -93,15 +93,15 @@ class app:
             for i in range(pulses):
                 for pin in pair1 and pair2:
                     pin.off()
-                for pin in pair2:
+                for pin in pair1:
                     pin.on()  # Turn on the pin
                 time.sleep(pos_t)
                 for pin in pair1 and pair2:
                     pin.off()
-                for pin in pair1:
+                for pin in pair2:
                     pin.on()  # Turn on the pin
                 time.sleep(neg_t)
-                for pin in pair1:
+                for pin in pair2:
                     pin.off()
                 time.sleep(pause_t)
             charge_switch = False   
@@ -158,19 +158,17 @@ class app:
             total_resistance = chest_resistance + 19 #internal circuit resistance
             # Calculate the total voltage using the voltage divider formula
             Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
-            print("the voltage is: " + str(Voltage_defibrillation))
+            #print("the voltage is: " + str(Voltage_defibrillation))
             
         elif calibration_switch == False:
             tms = (2*pulses)/1000
             desired_voltage = math.sqrt((float(energy)*float(chest_resistance)/float(tms)))
             total_resistance = chest_resistance + 19
             Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
-            print(str(Voltage_defibrillation) + " Volts")
 
         else: pass
 
         time_charging = cubic_fit(Voltage_defibrillation)
-        print("calculating")
 
         #### reset settings####
     def reset():
@@ -211,56 +209,32 @@ class modes:
         time.sleep(3)
         bypass_IGBT.off()
 
-"""
-def confirm ():
-    confirmation1 = input("press y to confirm defibrillation")
-    confirmation2 = input("again")
-    if confirmation1 and confirmation2 == "y":
-        app.defibrillation_discharge()
-        print("defibrillation successful")
-        
-    elif confirmation1 and confirmation2 == "n":
-        modes.deplet_capacitor()
-        
-    else: confirm()
-
-modes.deplet_capacitor()
-uart = UART(0, baudrate=115200)
+uart = UART(0, baudrate=9600)
 print("hi")
-charge_switch = 3
-calibration_switch = False 
-energy= 0.5
-chest_resistance = 571
-#voltage_defibrillation= 100
-app.charge()
-print( "charging time is: " + str(time_charging))
-charge_switch = True
-confirm()
-"""    
+
 while True:
-    message = sys.stdin.readline().strip()
-    values = message.split(",")
-    value1, value2 = values[:2]
-    if value1 == "0":
-        energy = value2
-        response= "working"
-        sys.stdout.write( str(response) + "\n")
-    elif value1 == "1":
-        app.calibration()
-        response = amperage
-        sys.stdout.write( str(response) + "\n")
-    elif value1 == "2":
-        app.charge()
-    elif value1 == "3":
-        app.defibrillation_discharge()
-    elif value1 == "4":
-        app.reset()
-    elif value1 == "5":
-        calibration_switch = None
-        Voltage_defibrillation = float(value2)
-    elif value1 == "6":
-        shape = value2.split("/")
-        pulses, pos_t, neg_t, pause_t = map(float, shape)
-    elif value1 == "7":
-        chest_resistance = float(value2)
-    else: time.sleep(0.1)
+    if uart.any():
+        message = sys.stdin.readline().strip()
+        values = message.split(",")
+        value1, value2 = values[:2]
+        if value1 == "0":
+            energy = value2
+        elif value1 == "1":
+            app.calibration()
+            response = amperage
+            sys.stdout.write( str(response) + "\n")
+        elif value1 == "2":
+            app.charge()
+        elif value1 == "3":
+            app.defibrillation_discharge()
+        elif value1 == "4":
+            app.reset()
+        elif value1 == "5":
+            calibration_switch = None
+            Voltage_defibrillation = float(value2)
+        elif value1 == "6":
+            shape = value2.split("/")
+            pulses, pos_t, neg_t, pause_t = map(float, shape)
+        elif value1 == "7":
+            chest_resistance = float(value2)
+        else: pass

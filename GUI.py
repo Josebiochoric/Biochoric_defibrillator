@@ -21,7 +21,7 @@ def find_serial_port():
     possible_ports = possible_unix_ports + possible_windows_ports
     for port in possible_ports:
         try:
-            ser = serial.Serial(port, 9600, timeout=5)
+            ser = serial.Serial(port, 115200, timeout=5)
             return ser
         except serial.SerialException:
             continue
@@ -89,7 +89,7 @@ class app:
         response = ser.readline().decode('utf-8').strip()
         if response != "":
             print("Received from Pico:", response)
-        else:pass
+        else: print("aaaaaaaaaaaaaaa:", response)
         if variable_id == "1":
             response = float(response)
             if response > 0:

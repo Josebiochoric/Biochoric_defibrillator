@@ -218,7 +218,7 @@ print("hi")
 #calibration_switch = "a"
 #app.charge()
 #app.defibrillation_discharge()
-#print("end")
+print("end")
 
 while True:
     message = sys.stdin.readline().strip()

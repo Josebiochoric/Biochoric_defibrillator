@@ -87,23 +87,18 @@ def main():
         gui_path = "/home/biochoric/GUI.py"
         defib_path = "/home/biochoric/main.py"
 
-        #gui_path = "GUI.py"
-        #defib_path = "defibrillator.py"
-
         # Update GUI.py
         update_file(gui_url, gui_path)
 
         # Update defibrillator.py and load to Pico
         update_file(defib_url, defib_path, serial_port='/dev/ttyACM0')
-        #update_file(defib_url, defib_path, serial_port='COM9')
 
     # Always load defibrillator.py to Pico
     print("Restarting backend...")
     load_file_to_pico( "/home/biochoric/main.py",'/dev/ttyACM0')
-    #load_file_to_pico( "defibrillator.py",'COM9')
 
     # Run GUI.py as a separate process
-    run_script_as_main("GUI.py")
+    run_script_as_main("/home/biochoric/GUI.py")
 
 if __name__ == "__main__":
     main()

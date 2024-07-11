@@ -158,19 +158,17 @@ class app:
             total_resistance = chest_resistance + 19 #internal circuit resistance
             # Calculate the total voltage using the voltage divider formula
             Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
-            print("the voltage is: " + str(Voltage_defibrillation))
+            #print("the voltage is: " + str(Voltage_defibrillation))
             
         elif calibration_switch == False:
             tms = (2*pulses)/1000
             desired_voltage = math.sqrt((float(energy)*float(chest_resistance)/float(tms)))
             total_resistance = chest_resistance + 19
             Voltage_defibrillation = (desired_voltage / chest_resistance) * total_resistance
-            print(str(Voltage_defibrillation) + " Volts")
 
         else: pass
 
         time_charging = cubic_fit(Voltage_defibrillation)
-        print("calculating")
 
         #### reset settings####
     def reset():
@@ -211,40 +209,25 @@ class modes:
         time.sleep(3)
         bypass_IGBT.off()
 
-"""
-def confirm ():
-    confirmation1 = input("press y to confirm defibrillation")
-    confirmation2 = input("again")
-    if confirmation1 and confirmation2 == "y":
-        app.defibrillation_discharge()
-        print("defibrillation successful")
-        
-    elif confirmation1 and confirmation2 == "n":
-        modes.deplet_capacitor()
-        
-    else: confirm()
-
-modes.deplet_capacitor()
-uart = UART(0, baudrate=115200)
+#uart = UART(0, baudrate=115200)
 print("hi")
-charge_switch = 3
-calibration_switch = False 
-energy= 0.5
-chest_resistance = 571
-#voltage_defibrillation= 100
-app.charge()
-print( "charging time is: " + str(time_charging))
-charge_switch = True
-confirm()
-"""    
+#modes.deplet_capacitor()
+#Voltage_defibrillation = 50
+#pulses=2
+#pos_t=10
+#calibration_switch = "a"
+#app.charge()
+#app.defibrillation_discharge()
+#print("end")
+
 while True:
     message = sys.stdin.readline().strip()
     values = message.split(",")
     value1, value2 = values[:2]
+    #modes.deplet_capacitor()
     if value1 == "0":
+        modes.deplet_capacitor()
         energy = value2
-        response= "working"
-        sys.stdout.write( str(response) + "\n")
     elif value1 == "1":
         app.calibration()
         response = amperage
@@ -263,4 +246,7 @@ while True:
         pulses, pos_t, neg_t, pause_t = map(float, shape)
     elif value1 == "7":
         chest_resistance = float(value2)
-    else: time.sleep(0.1)
+    elif value1 == "8":
+        sys.stdout.write( "I am ready to work" + "\n")
+    else: pass
+    time.sleep(0.1)

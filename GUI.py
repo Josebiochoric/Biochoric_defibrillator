@@ -89,7 +89,7 @@ class app:
         response = ser.readline().decode('utf-8').strip()
         if response != "":
             print("Received from Pico:", response)
-        else: print("aaaaaaaaaaaaaaa:", response)
+        else: pass
         if variable_id == "1":
             response = float(response)
             if response > 0:
@@ -104,8 +104,8 @@ class app:
         advanced_tab.text_frame_advanced_1_3.config(text="Energy is set to " + str(var) + " J")
         logging.info("Energy is set to " + str(var) + "J")
         advanced_tab.text_frame_advanced_2_3.config(text="Voltage not set")
-        advanced_tab.my_button_advanced_calibrate["state"] = tk.NORMAL
-        main_tab.my_button["state"] = tk.NORMAL
+        #advanced_tab.my_button_advanced_calibrate["state"] = tk.NORMAL
+        #main_tab.my_button["state"] = tk.NORMAL
         main_tab.my_button_0["state"]=tk.NORMAL
         main_tab.text_label_2.config(text = "2nd step: Please set a resistance value or use automatic calibration")
         energy = var
@@ -208,7 +208,7 @@ class app:
         advanced_tab.my_button_advanced_charge["state"] = tk.DISABLED
         advanced_tab.my_button_advanced_defibrillate["state"] = tk.DISABLED
         advanced_tab.my_button_advanced_defibrillate["bg"] = "#0095D9"
-        advanced_tab.my_button_advanced_calibrate["state"] = tk.NORMAL
+        #advanced_tab.my_button_advanced_calibrate["state"] = tk.NORMAL
         main_tab.my_button["state"]=tk.NORMAL
         main_tab.my_button_0["state"]=tk.NORMAL
         ## give it a sec just in case

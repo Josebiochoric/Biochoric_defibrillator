@@ -209,16 +209,6 @@ class modes:
         time.sleep(3)
         bypass_IGBT.off()
 
-#uart = UART(0, baudrate=115200)
-print("hi")
-#modes.deplet_capacitor()
-#Voltage_defibrillation = 50
-#pulses=2
-#pos_t=10
-#calibration_switch = "a"
-#app.charge()
-#app.defibrillation_discharge()
-print("end")
 
 while True:
     message = sys.stdin.readline().strip()
